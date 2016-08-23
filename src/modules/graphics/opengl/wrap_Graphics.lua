@@ -33,6 +33,9 @@ GLSL.VERSION = "#version 120"
 GLSL.VERSION_ES = "#version 100"
 
 GLSL.SYNTAX = [[
+#if __VERSION__ >= 130
+#define texture2D texture
+#endif
 #ifndef GL_ES
 #define lowp
 #define mediump
@@ -128,6 +131,11 @@ GLSL.VERTEX = {
 #define VERTEX
 #define LOVE_PRECISE_GAMMA
 
+#if __VERSION__ >= 130
+#define varying out
+#define attribute in
+#endif
+
 attribute vec4 VertexPosition;
 attribute vec4 VertexTexCoord;
 attribute vec4 VertexColor;
@@ -159,6 +167,12 @@ GLSL.PIXEL = {
 
 #ifdef GL_ES
 precision mediump float;
+#endif
+
+#if __VERSION__ >= 130
+#define varying in
+#define gl_FragColor _fragColor
+	out vec4 _fragColor;
 #endif
 
 varying mediump vec4 VaryingTexCoord;

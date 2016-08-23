@@ -111,11 +111,18 @@ public:
 
 private:
 
+	enum ContextProfile
+	{
+		ContextProfile_Legacy,
+		ContextProfile_GLES,
+		ContextProfile_Core
+	};
+
 	struct ContextAttribs
 	{
 		int versionMajor;
 		int versionMinor;
-		bool gles;
+		ContextProfile profile;
 		bool debug;
 	};
 

@@ -120,12 +120,14 @@ void Window::setGLContextAttributes(const ContextAttribs &attribs)
 	int profilemask = 0;
 	int contextflags = 0;
 
-	if (attribs.gles)
+	if (attribs.profile == ContextProfile_GLES)
 		profilemask = SDL_GL_CONTEXT_PROFILE_ES;
+	else if (attribs.profile == ContextProfile_Core)
+		profilemask = SDL_GL_CONTEXT_PROFILE_CORE;
 	else if (attribs.debug)
-		profilemask = SDL_GL_CONTEXT_PROFILE_COMPATIBILITY;
+		profilemask |= SDL_GL_CONTEXT_PROFILE_COMPATIBILITY;
 
-	if (attribs.debug)
+	// if (attribs.debug)
 		contextflags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, attribs.versionMajor);
@@ -169,7 +171,7 @@ bool Window::checkGLVersion(const ContextAttribs &attribs, std::string &outversi
 	// glGetString(GL_VERSION) returns a string with the format "major.minor",
 	// or "OpenGL ES major.minor" in GLES contexts.
 	const char *format = "%d.%d";
-	if (attribs.gles)
+	if (attribs.profile == ContextProfile_GLES)
 		format = "OpenGL ES %d.%d";
 
 	if (sscanf(glversion, format, &glmajor, &glminor) != 2)
@@ -185,6 +187,7 @@ bool Window::checkGLVersion(const ContextAttribs &attribs, std::string &outversi
 bool Window::createWindowAndContext(int x, int y, int w, int h, Uint32 windowflags, int msaa)
 {
 	bool preferGLES = false;
+	bool preferLegacy = true;
 
 #ifdef LOVE_GRAPHICS_USE_OPENGLES
 	preferGLES = true;
@@ -217,15 +220,22 @@ bool Window::createWindowAndContext(int x, int y, int w, int h, Uint32 windowfla
 		preferGLES = (gleshint != nullptr && gleshint[0] != '0');
 	}
 
+	if (preferLegacy)
+	{
+		const char *glcorehint = SDL_GetHint("LOVE_GRAPHICS_USE_GLCORE");
+		preferLegacy = !(glcorehint != nullptr && glcorehint[0] != '0');
+	}
+
 	// Do we want a debug context?
 	const char *debughint = SDL_GetHint("LOVE_GRAPHICS_DEBUG");
 	bool debug = (debughint != nullptr && debughint[0] != '0');
 
 	// Different context attribute profiles to try.
 	std::vector<ContextAttribs> attribslist = {
-		{2, 1, false, debug}, // OpenGL 2.1.
-		{3, 0, true,  debug}, // OpenGL ES 3.
-		{2, 0, true,  debug}, // OpenGL ES 2.
+		{3, 2, ContextProfile_Core,   debug}, // OpenGL 3.2 Core.
+		{2, 1, ContextProfile_Legacy, debug}, // OpenGL 2.1.
+		{3, 0, ContextProfile_GLES,   debug}, // OpenGL ES 3.
+		{2, 0, ContextProfile_GLES,   debug}, // OpenGL ES 2.
 	};
 
 	// OpenGL ES 3+ contexts are only properly supported in SDL 2.0.4+.
@@ -241,12 +251,15 @@ bool Window::createWindowAndContext(int x, int y, int w, int h, Uint32 windowfla
 		auto it = attribslist.begin();
 		while (it != attribslist.end())
 		{
-			if (it->gles && it->versionMajor >= 3)
+			if (it->profile == ContextProfile_GLES && it->versionMajor >= 3)
 				it = attribslist.erase(it);
 			else
 				++it;
 		}
 	}
+
+	if (preferLegacy || preferGLES)
+		std::rotate(attribslist.begin(), attribslist.begin() + 1, attribslist.end());
 
 	// Move OpenGL ES to the front of the list if we should prefer GLES.
 	if (preferGLES)

@@ -153,6 +153,15 @@ void OpenGL::setupContext()
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
+#if 0
+	if (GLAD_ARB_vertex_array_object)
+	{
+		GLuint vao;
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+	}
+#endif
+
 	glActiveTexture(GL_TEXTURE0);
 	state.curTextureUnit = 0;
 

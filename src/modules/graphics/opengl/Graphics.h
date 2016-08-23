@@ -128,6 +128,13 @@ public:
 	bool isCreated() const;
 
 	/**
+	 * Set the depth test mode, and if the depth buffer should be written to.
+	 * @param mode The depth test mode.
+	 * @param write Whether to write to the depth buffer.
+	 **/
+	void setDepthTest(CompareMode mode, bool write);
+
+	/**
 	 * Scissor defines a box such that everything outside that box is discarded and not drawn.
 	 * Scissoring is automatically enabled.
 	 * @param x The x-coordinate of the top-left corner.
@@ -488,6 +495,9 @@ private:
 
 		BlendMode blendMode = BLEND_ALPHA;
 		BlendAlpha blendAlphaMode = BLENDALPHA_MULTIPLY;
+
+		CompareMode depthMode = COMPARE_ALWAYS;
+		bool depthWrite = true;
 
 		float lineWidth = 1.0f;
 		LineStyle lineStyle = LINE_SMOOTH;

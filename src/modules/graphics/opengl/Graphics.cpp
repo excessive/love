@@ -107,6 +107,7 @@ void Graphics::restoreState(const DisplayState &s)
 	setBackgroundColor(s.backgroundColor);
 
 	setBlendMode(s.blendMode, s.blendAlphaMode);
+	setDepthTest(s.depthMode, s.depthWrite);
 
 	setLineWidth(s.lineWidth);
 	setLineStyle(s.lineStyle);
@@ -626,6 +627,44 @@ int Graphics::getHeight() const
 bool Graphics::isCreated() const
 {
 	return created;
+}
+
+void Graphics::setDepthTest(CompareMode mode, bool write)
+{
+	if (mode == COMPARE_ALWAYS)
+		glDisable(GL_DEPTH_TEST);
+	else
+	{
+		glEnable(GL_DEPTH_TEST);
+		GLenum glmode;
+		switch (mode) {
+			case COMPARE_LESS:     glmode = GL_LESS; break;
+			case COMPARE_LEQUAL:   glmode = GL_LEQUAL; break;
+			case COMPARE_EQUAL:    glmode = GL_EQUAL; break;
+			case COMPARE_GEQUAL:   glmode = GL_GEQUAL; break;
+			case COMPARE_GREATER:  glmode = GL_GREATER; break;
+			case COMPARE_NOTEQUAL: glmode = GL_NOTEQUAL; break;
+			case COMPARE_ALWAYS:   glmode = GL_ALWAYS; break;
+			default: break;
+		}
+		glDepthFunc(glmode);
+	}
+
+	if (GLAD_ES_VERSION_2_0)
+	{
+		glDepthRangef(0, 1);
+		glClearDepthf(1.0);
+	}
+	else
+	{
+		glDepthRange(0, 1);
+		glClearDepth(1.0);
+	}
+
+	glDepthMask(write ? 1 : 0);
+
+	states.back().depthWrite = write;
+	states.back().depthMode = mode;
 }
 
 void Graphics::setScissor(int x, int y, int width, int height)

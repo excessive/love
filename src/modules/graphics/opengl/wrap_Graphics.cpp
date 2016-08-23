@@ -173,6 +173,28 @@ int w_getDimensions(lua_State *L)
 	return 2;
 }
 
+int w_setDepthTest(lua_State *L)
+{
+	int nargs = lua_gettop(L);
+
+	Graphics::CompareMode mode = Graphics::COMPARE_ALWAYS;
+	bool write = true;
+
+	if (!lua_isnoneornil(L, 1))
+	{
+		const char *depthstr = luaL_checkstring(L, 1);
+		if (!Graphics::getConstant(depthstr, mode))
+			return luaL_error(L, "Invalid compare mode: %s", depthstr);
+	}
+
+	if (nargs >= 2)
+		write = lua_toboolean(L, 2);
+
+	instance()->setDepthTest(mode, write);
+
+	return 0;
+}
+
 int w_setScissor(lua_State *L)
 {
 	int nargs = lua_gettop(L);
@@ -2012,6 +2034,8 @@ static const luaL_Reg functions[] =
 	{ "getWidth", w_getWidth },
 	{ "getHeight", w_getHeight },
 	{ "getDimensions", w_getDimensions },
+
+	{ "setDepthTest", w_setDepthTest },
 
 	{ "setScissor", w_setScissor },
 	{ "intersectScissor", w_intersectScissor },
